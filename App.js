@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-
 import Chat from "./components/Chat";
 import Start from "./components/Start";
 import "react-native-gesture-handler";

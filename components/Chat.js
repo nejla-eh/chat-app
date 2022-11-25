@@ -3,6 +3,9 @@ import { View, Text, KeyboardAvoidingView } from "react-native";
 import { GiftedChat, Bubble, InputToolbar } from "react-native-gifted-chat";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
+import CustomActions from "./CustomActions";
+import MapView from "react-native-maps";
+
 // import firebase from "firebase";
 // import firestore from "firebase";
 
@@ -50,6 +53,7 @@ export default class Chat extends Component {
   }
 
   componentDidMount() {
+    this.deleteMessages();
     const name = this.props.route.params.name;
     this.props.navigation.setOptions({ title: name });
     this.getMessages();
@@ -126,6 +130,8 @@ export default class Chat extends Component {
         text: data.text,
         createdAt: data.createdAt.toDate(),
         user: data.user,
+        image: data.image || null,
+        location: data.location || null,
       });
     });
     this.setState({ messages });
@@ -134,10 +140,12 @@ export default class Chat extends Component {
   addMessage(message) {
     this.referenceChatMessages.add({
       _id: message._id,
-      createdAt: message.createdAt,
-      text: message.text,
-      user: message.user,
       uid: this.state.uid,
+      createdAt: message.createdAt,
+      text: message.text || "",
+      user: message.user,
+      image: message.image || null,
+      location: message.location || null,
     });
   }
 
@@ -165,10 +173,31 @@ export default class Chat extends Component {
 
   //render the default InputToolbar only when the user is online
   renderInputToolbar(props) {
-    if (this.state.isConnected === false) {
-    } else {
+    if (this.state.isConnected) {
       return <InputToolbar {...props} />;
     }
+  }
+
+  renderCustomActions = (props) => {
+    return <CustomActions {...props} />;
+  };
+
+  renderCustomView(props) {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
+          region={{
+            latitude: currentMessage.location.latitude,
+            longitude: currentMessage.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        />
+      );
+    }
+    return null;
   }
 
   render() {
@@ -178,6 +207,8 @@ export default class Chat extends Component {
         <GiftedChat
           renderBubble={this.renderBubble.bind(this)}
           renderInputToolbar={this.renderInputToolbar.bind(this)}
+          renderActions={this.renderCustomActions.bind(this)}
+          renderCustomView={this.renderCustomView}
           messages={this.state.messages}
           onSend={(messages) => this.onSend(messages)}
           user={{
